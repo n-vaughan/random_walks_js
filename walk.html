@@ -1,0 +1,119 @@
+<script>
+// Function to clear the whole screen
+function clear() {
+	// Set the fill style to black
+	ctx.fillStyle = "rgb(0, 0, 0)";
+	// Fill a rectangle consisting of the whole grid
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+	// Note: (0, 0) is the top right corner, and down is +Y and right is +X
+	// Kinda weird, but you get used to it eventually
+}
+
+// Shamelessly cribbed from somewhere else that told me how to do this in all browsers :/
+// Magic as far as you or I am concerned.
+function fullscreen() {
+	var requestMethod = can.requestFullScreen || can.webkitRequestFullScreen || can.mozRequestFullScreen || can.msRequestFullScreen;
+	if(requestMethod)
+		requestMethod.call(can);
+}
+
+// This function is run just once, once the page is done loading.
+// (See the bottom of the file-- onload=go() makes "go" run once the page loads.)
+function go() {
+	// "can" is the canvas element in the HTML
+	can = document.getElementById('c');
+
+	// if you click on it, run the "clear" method, defined above
+	can.onclick = clear;
+
+	// if you double click on it, run the "fullscreen" method, defined above
+	can.ondblclick = fullscreen;
+
+	// ctx is actually used elsewhere; it is our drawing context
+	// and we use it to actually draw on the canvas
+	ctx = can.getContext('2d');
+
+	// make some global variables (WIDTH, HEIGHT) and set both them and
+	// the canvas width/height to the size of the user's computer screen.
+	// You can set to something smaller if you want-- just replace screen.whatever
+	// with some number.
+	WIDTH = can.width = screen.width;
+	HEIGHT = can.height = screen.height;
+
+	// Fill screen with black (r=0, g=0, b=0)
+	ctx.fillStyle = "rgb(0, 0, 0)";
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+	// change as you will ~
+	STEPS_PER_TICK = 100;
+
+	// set current coords of the walk outside the bounds--
+	// that way they'll be reset immediately
+	X = -1;
+	Y = -1;
+
+	// Run "tick" function every 16 milliseconds
+	// 1000 ms = 1s, and 1000/16 is about 60, so ~60fps.
+	setInterval(tick, 16);
+}
+
+function tick() {
+	// 60 steps per second would be lame, so let's do STEPS_PER_TICK steps per tick...
+	for(var i = 0; i < STEPS_PER_TICK; i++) {
+		// If we leave the bounds, restart and recolor
+		if(X < 0 || Y < 0 || X > WIDTH || Y > HEIGHT) {
+			// "number | 0" is how to get an INTEGER from a non-whole number
+			// since Math.random() gives you a decimal
+			// So let's get a new random start point inside the bounds
+			X = (Math.random() * WIDTH) | 0;
+			Y = (Math.random() * HEIGHT) | 0;
+
+			// Random red, blue, green.
+			// Math.random() returns between 0 and 1
+			var r = Math.random();
+			var g = Math.random();
+			var b = Math.random();
+			// So let's scale to between 0 and 255
+			r *= r * 255;
+			g *= g * 255;
+			b *= b * 255;
+			// And then convert to a whole number
+			r = r | 0;
+			g = g | 0;
+			b = b | 0;
+
+			// Finally, set the fill style to our new red, green, blue choices
+			// Note: in JS you can "add" strings to numbers and get a string--
+			// it automatically makes the number into a string.
+			ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+			// so this line will do something like:
+			// ctx.fillStyle = "rgb(100, 59, 179)";
+			// You can even uncomment the previous line to get a constant color.
+		}
+
+
+		// Take a step in a random direction
+		var random = Math.random();
+		if(random > 0.75) // 1/4 chance of increasing X
+			X++;
+		else if(random > 0.5) // 1/4 chance of decreasing X
+			X--;
+		else if(random > 0.25) // 1/4 chance of increasing Y
+			Y++;
+		else // 1/4 chance of decreasing Y
+			Y--;
+		// The leftover chance (final else) is 1/4, since 1 - (1/4 + 1/4 + 1/4) = 1/4.
+
+		// draw every other location of the walk
+		// This gives it that half-filled kind of pattern--
+		// Try changing 2 to something else, or commenting out the "if" line entirely!
+		if(i % 2 == 0)
+			ctx.fillRect(X, Y, 1, 1);
+	}
+}
+</script>
+<body onload=go()>
+	<canvas id=c width=1920 height=1200></canvas>
+</body>
+
